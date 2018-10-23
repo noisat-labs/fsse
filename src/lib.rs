@@ -12,7 +12,7 @@ pub fn build_index(hk: u128, messages: &str) -> BTreeMap<u128, HashSet<usize>> {
         .enumerate()
         .filter(|(_, msg)| !msg.trim().is_empty())
         .flat_map(|(i, msg)| msg.split_whitespace().map(move |w| (i, w)))
-        .map(|(i, msg)| (simhash(hk, msg.trim()), i))
+        .map(|(i, w)| (simhash(hk, w.trim()), i))
         .fold(BTreeMap::new(), |mut sum, (hash, i)| {
             sum.entry(hash)
                 .or_insert(HashSet::new())
@@ -44,7 +44,7 @@ fn it_work() {
 
     let db = text.trim().lines().map(ToOwned::to_owned).collect::<Vec<_>>();
 
-    let key = rand::random();
+    let key = 0x99999;
     let map = build_index(key, text.trim());
 
     let t = trapdoor(key, "Tokio");
@@ -55,6 +55,13 @@ fn it_work() {
     assert!(flag);
 
     let t = trapdoor(key, "tokio");
+    let set = search(&map, t);
+    let flag = set.iter()
+        .any(|&i| db[i].find("Tokio").is_some());
+    assert!(!set.is_empty());
+    assert!(flag);
+
+    let t = trapdoor(key, "Tokyo");
     let set = search(&map, t);
     let flag = set.iter()
         .any(|&i| db[i].find("Tokio").is_some());
